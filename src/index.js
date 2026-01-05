@@ -86,6 +86,55 @@ app.get("/api/v1/mizuena", async (req, res) => {
     }
 });
 
+// For embed
+app.get("/api/v1/mizuena_old", async (_req, res) => {
+    try {
+        const query = "akiyama_mizuki shinonome_ena";
+        const url = new URL("https://safebooru.org/index.php");
+
+        url.searchParams.append("page", "dapi");
+        url.searchParams.append("s", "post");
+        url.searchParams.append("q", "index");
+        url.searchParams.append("pid", Math.floor(Math.random() * 7 + 1).toString());
+        url.searchParams.append("tags", query);
+        url.searchParams.append("json", "1");
+
+        const blacklisted = [
+            "hatsune_miku", "kagamine_rin", "kagamine_len", "megurine_luka", "meiko", "kaito",
+            "hoshino_ichika", "tenma_saki", "mochizuki_honami", "hinomori_shiho",
+            "hanasato_minori", "kiritani_haruka", "momoi_airi", "hinomori_shizuku",
+            "azusawa_kohane", "shiraishi_an", "shinonome_akito", "aoyagi_toya",
+            "tenma_tsukasa", "otori_emu", "kusanagi_nene", "kamishiro_rui",
+            "yoisaki_kanade", "asahina_mafuyu"
+        ];
+
+        const response = await fetch(url.href);
+        const data = await response.json();
+
+        let post = null;
+        let found = false;
+
+        while (found === false) {
+            post = data[Math.floor(Math.random() * data.length)];
+            const tags = post.tags.split(" ");
+
+            if (!tags.some(tag => blacklisted.includes(tag))) {
+                found = true;
+            }
+        }
+
+        const img = await fetch(post.file_url);
+        const buffer = await img.arrayBuffer();
+        const ct = img.headers.get("content-type") || "application/octet-stream";
+
+        res.setHeader("Content-Type", ct);
+        res.send(Buffer.from(buffer));
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`)
 });
