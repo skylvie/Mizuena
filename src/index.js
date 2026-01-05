@@ -1,26 +1,50 @@
 import express from "express";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const cache = new Map();
+
+const CACHE = path.join(process.cwd(), "cache.json");
+let cache = {};
+
+if (fs.existsSync(CACHE)) {
+    try {
+        cache = JSON.parse(fs.readFileSync(CACHE, "utf-8"));
+    } catch (err) {
+        console.error("Failed to load cache:", err);
+        cache = {};
+    }
+}
+
+
+function write() {
+    try {
+        fs.writeFileSync(CACHE, JSON.stringify(cache), "utf-8");
+    } catch (err) {
+        console.error("Failed to save cache:", err);
+    }
+}
 
 app.use(express.static("public"));
+
 app.get("/api/v1/mizuena", async (req, res) => {
     try {
         // UUID system so people can easily get the source image
         const uuidParam = req.query.uuid;
 
-        if (uuidParam && cache.has(uuidParam)) {
-            const cached = cache.get(uuidParam);
+        if (uuidParam && cache[uuidParam]) {
+            const img = await fetch(cache[uuidParam]);
+            const buffer = await img.arrayBuffer();
 
-            res.setHeader("Content-Type", cached.contentType);
-            return res.send(cached.buffer);
+            res.setHeader("Content-Type", "image/jpeg");
+            return res.send(Buffer.from(buffer));
         }
-        
+
         const query = "akiyama_mizuki shinonome_ena";
         const url = new URL("https://safebooru.org/index.php");
 
@@ -66,19 +90,10 @@ app.get("/api/v1/mizuena", async (req, res) => {
             }
         }
 
-        const img = await fetch(post.file_url);
-        const buffer = await img.arrayBuffer();
-
-        const ct = img.headers.get("content-type") || "application/octet-stream";
-
-        // cache
         const uuid = crypto.randomUUID();
+        cache[uuid] = post.file_url;
 
-        cache.set(uuid, {
-            buffer: Buffer.from(buffer),
-            contentType: ct
-        });
-
+        write();
         res.json({ uuid: uuid });
     } catch (err) {
         console.error(err);
@@ -125,9 +140,8 @@ app.get("/api/v1/mizuena_old", async (_req, res) => {
 
         const img = await fetch(post.file_url);
         const buffer = await img.arrayBuffer();
-        const ct = img.headers.get("content-type") || "application/octet-stream";
 
-        res.setHeader("Content-Type", ct);
+        res.setHeader("Content-Type", "image/jpeg");
         res.send(Buffer.from(buffer));
     } catch (err) {
         console.error(err);
