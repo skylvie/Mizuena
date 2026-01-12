@@ -64,7 +64,7 @@ app.get("/api/v1/mizuena", async (req, res) => {
             "hoshino_ichika", "tenma_saki", "mochizuki_honami", "hinomori_shiho", // Leo/need
             "hanasato_minori", "kiritani_haruka", "momoi_airi", "hinomori_shizuku", // MORE MORE JUMP!
             "azusawa_kohane", "shiraishi_an", "shinonome_akito", "aoyagi_toya", // Vivid BAD SQUAD
-            "tenma_tsukasa", "otori_emu", "kusanagi_nene", "kamishiro_rui", // WonderlandsxShowtime
+            "tenma_tsukasa", "ootori_emu", "kusanagi_nene", "kamishiro_rui", // WonderlandsxShowtime
             "yoisaki_kanade", "asahina_mafuyu" // Rest of Nightcord at 25:00
         ];
 
